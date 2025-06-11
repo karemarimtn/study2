@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>キャラクターと冒険！文章読解クエスト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #fef3c7 0%, #f59e0b 100%);
+            background-attachment: fixed;
+            font-family: 'Noto Sans JP', sans-serif;
+            overflow-x: hidden;
+        }
+        
+        .font-mochiy {
+            font-family: 'Mochiy Pop One', sans-serif;
+        }
+        
+        .game-container {
+            border: 6px solid #8B4513;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3), inset 0 0 20px rgba(255,255,255,0.2);
+            border-radius: 20px;
+            min-height: 600px;
+            backdrop-filter: blur(10px);
+            background: rgba(254, 243, 199, 0.95);
+        }
+        
+        .btn {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 6px 0;
+            transform: translateY(0);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(2px) scale(1.05);
+            box-shadow: 0 4px 0;
+        }
+        
+        .btn:active {
+            transform: translateY(6px) scale(0.98);
+            box-shadow: 0 0 0;
+        }
+        
+        .option-btn {
+            transition: all 0.3s ease;
+            border-bottom-width: 4px;
+        }
+        
+        .option-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        
+        .feedback-fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        .bounce-in {
+            animation: bounceIn 0.6s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.1); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* キャラクター別カラーテーマ */
+        .btn-one-piece { 
+            background: linear-gradient(45deg, #e63946, #f77f00);
+            border-color: #a31a23; 
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .btn-one-piece:hover { background: linear-gradient(45deg, #f05a65, #ffb700); }
+        
+        .btn-kimetsu { 
+            background: linear-gradient(45deg, #0081a7, #00f5ff);
+            border-color: #005670; 
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .btn-kimetsu:hover { background: linear-gradient(45deg, #00a0ce, #7fffd4); }
+        
+        /* 冒険ゲージのスタイル強化 */
+        #gauge-bar-container {
+            background: linear-gradient(90deg, #e5e5e5, #cccccc);
+            border-radius: 9999px;
+            overflow: hidden;
+            border: 3px solid #a16207;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        #gauge-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #fde047, #f59e0b, #dc2626);
+            transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: inset 0 -2px 4px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        
+        #gauge-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+            animation: gaugeShine 2s infinite;
+        }
+        
+        @keyframes gaugeShine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        /* キャラクターアイコンの改善 */
+        .character-icon {
+            background: linear-gradient(135deg, #4a5568, #2d3748);
+            border: 4px solid #fff;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3), inset 0 0 10px rgba(255,255,255,0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .character-icon:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+        
+        /* 吹き出しの改善 */
+        .speech-bubble {
+            background: linear-gradient(135deg, #ffffff, #f8fafc);
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        /* ストーリーエリアの改善 */
+        .story-container {
+            background: linear-gradient(135deg, #ffffff, #f1f5f9);
+            border: 3px solid #cbd5e0;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        .story-container::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            background: linear-gradient(45deg, #ffd700, #ffb347, #ffd700);
+            border-radius: inherit;
+            z-index: -1;
+            opacity: 0.7;
+        }
+        
+        /* クイズエリアの改善 */
+        .quiz-container {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            border: 3px solid #3b82f6;
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+        }
+        
+        /* レスポンシブ改善 */
+        @media (max-width: 768px) {
+            .game-container {
+                margin: 10px;
+                min-height: 500px;
+            }
+            
+            .character-icon {
+                width: 80px !important;
+                height: 80px !important;
+            }
+            
+            .font-mochiy {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div id="game-container" class="game-container w-full max-w-4xl mx-auto rounded-lg p-6 md:p-8 flex flex-col justify-center">
+
+        <!-- コース選択画面 -->
+        <div id="course-selection-screen" class="text-center bounce-in">
+            <h1 class="font-mochiy text-4xl md:text-5xl text-amber-900 mb-8 pulse-animation">
+                🌟 どっちの世界で冒険する？ 🌟
+            </h1>
+            <div class="flex flex-col md:flex-row gap-6 justify-center">
+                <button data-course="one-piece" class="btn btn-one-piece font-mochiy text-3xl font-bold py-12 px-16 rounded-2xl">
+                    🏴‍☠️ ワンピース ⚓
+                </button>
+                <button data-course="kimetsu" class="btn btn-kimetsu font-mochiy text-3xl font-bold py-12 px-16 rounded-2xl">
+                    ⚔️ 鬼滅の刃 🔥
+                </button>
+            </div>
+            <p class="mt-6 text-amber-800 text-lg">好きなアニメを選んで、キャラクターと一緒に冒険しよう！</p>
+        </div>
+        
+        <!-- 難易度選択画面 -->
+        <div id="difficulty-selection-screen" class="hidden text-center">
+            <h1 id="difficulty-title" class="font-mochiy text-3xl md:text-4xl text-amber-900 mb-6 bounce-in"></h1>
+            <p class="text-amber-800 text-lg mb-8">君のレベルに合わせて選んでね！</p>
+            <div id="difficulty-buttons" class="grid grid-cols-1 md:grid-cols-3 gap-6 justify-center mb-8">
+            </div>
+            <button id="back-to-course-selection" class="text-gray-600 hover:text-gray-800 hover:underline text-lg transition-colors">
+                ← コース選択にもどる
+            </button>
+        </div>
+
+        <!-- メインゲーム画面 -->
+        <div id="main-game" class="hidden">
+            <!-- キャラクターエリア -->
+            <div id="character-area" class="mb-6">
+                <div class="flex items-center gap-4 mb-4 p-5 bg-gradient-to-r from-amber-100 to-amber-50 rounded-2xl border-3 border-amber-200 shadow-lg">
+                    <div class="character-icon w-28 h-28 md:w-36 md:h-36 rounded-full flex items-center justify-center text-white flex-shrink-0">
+                        <p id="character-name" class="font-mochiy text-2xl md:text-3xl"></p>
+                    </div>
+                    <div class="speech-bubble p-4 rounded-2xl flex-1 relative">
+                        <p id="character-message" class="text-gray-800 font-bold text-lg"></p>
+                        <div class="absolute left-[-12px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[12px] border-t-transparent border-b-[12px] border-b-transparent border-r-[12px] border-r-white"></div>
+                    </div>
+                </div>
+                
+                <!-- 冒険ゲージ -->
+                <div id="gauge-area" class="p-4 bg-gradient-to-r from-amber-200 to-yellow-200 rounded-2xl border-3 border-amber-300 shadow-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-mochiy text-lg text-amber-800">🔥 パワーゲージ</span>
+                        <span id="gauge-text" class="font-bold text-amber-900 text-lg"></span>
+                    </div>
+                    <div id="gauge-bar-container" class="w-full h-6">
+                        <div id="gauge-bar" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 物語エリア -->
+            <div id="story-area" class="story-container mb-8 p-6 rounded-2xl">
+                <h3 id="story-title" class="font-mochiy text-2xl text-amber-800 border-b-3 border-amber-300 pb-3 mb-5"></h3>
+                <p id="story-text" class="text-gray-700 leading-relaxed whitespace-pre-wrap text-xl"></p>
+            </div>
+
+            <!-- クイズエリア -->
+            <div id="quiz-area" class="hidden">
+                <div class="quiz-container text-center p-6 rounded-2xl mb-6">
+                    <p id="quiz-question" class="text-blue-800 font-bold text-xl"></p>
+                </div>
+                <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <!-- フィードバックエリア -->
+            <div id="feedback-area" class="hidden mt-6 text-center">
+                <p id="feedback-text" class="font-bold text-3xl mb-4"></p>
+                <button id="next-button" class="hidden mt-4 btn bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 border-green-700 text-white font-bold py-3 px-8 rounded-full text-xl">
+                </button>
+            </div>
+        </div>
+
+        <!-- クリア画面 -->
+        <div id="clear-screen" class="hidden text-center">
+            <h1 class="font-mochiy text-5xl md:text-6xl text-yellow-500 mb-6 bounce-in">🎉 冒険クリア！ 🎉</h1>
+            <p id="final-score" class="font-mochiy text-4xl text-amber-900 mb-6"></p>
+            <p id="clear-message" class="text-gray-700 text-xl mb-10"></p>
+            <button id="back-to-start-button" class="btn bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 border-blue-700 font-mochiy text-white text-2xl font-bold py-6 px-12 rounded-2xl">
+                🚀 他の冒険にいく！
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- データ定義 ---
+        const allAdventures = {
+            "one-piece": {
+                name: "ワンピース",
+                difficulties: {
+                    "star1": {
+                        name: "⭐☆☆（かんたん）",
+                        character: { 
+                            name: "ルフィ", 
+                            greeting: "おう、オレはルフィ！海賊王になる男だ！おめぇ、オレの仲間になれ！一緒に冒険に行くぞ！",
+                            transformations: [
+                                { threshold: 2, name: "ギア２（セカンド）", message: "きたきたきた！体が熱くなってきた！🔥" },
+                                { threshold: 5, name: "ギア３（サード）", message: "骨風船！もっとでっかくなるぞ！💪" },
+                                { threshold: 8, name: "ギア４（フォース）", message: "筋肉風船！これで敵をぶっとばす！⚡" },
+                                { threshold: 10, name: "ギア５（フィフス）", message: "ドンドットット♪ これがオレの最高地点だ！ニカっ！✨" }
+                            ]
+                        },
+                        stages: [/* 10問分のデータ */]
+                    },
+                    "star2": {
+                        name: "⭐⭐☆（ふつう）",
+                        character: { 
+                            name: "ゾロ", 
+                            greeting: "おぅ。俺はロロノア・ゾロだ。世界一の大剣豪になる。てめぇ、道にまよわねぇよう、しっかりついてきな。",
+                            transformations: [
+                                { threshold: 2, name: "二刀流", message: "刀が二本あれば、十分だ。⚔️" },
+                                { threshold: 5, name: "三刀流", message: "三刀流…これがおれのスタイルだ。🗡️" },
+                                { threshold: 8, name: "鬼気九刀流 阿修羅", message: "九山八海…。千の世界…。斬れぬものなし。👹" },
+                                { threshold: 10, name: "覇王色の覇気", message: "…フン。王にでもなるつもりか、お前は。👑" }
+                            ]
+                        },
+                        stages: [/* 10問分のデータ */]
+                    },
+                    "star3": {
+                        name: "⭐⭐⭐（むずかしい）",
+                        character: { 
+                            name: "サンジ", 
+                            greeting: "よう。一流コックのサンジだ。腹をすかせたレディのために、最高の食材を探しに行く。お前も手伝え。ただし、足手まといになるなよ？",
+                            transformations: [
+                                { threshold: 2, name: "悪魔風脚", message: "燃えてきたぜ…！🔥" },
+                                { threshold: 5, name: "フランバージュショット", message: "もっと熱く、もっと強く！🌋" },
+                                { threshold: 8, name: "イフリートジャンブ", message: "青い炎は、もっと高温の証拠だ…！💙" },
+                                { threshold: 10, name: "愛の料理人", message: "どんな力より、愛は強ぇ。覚えておきな。❤️" }
+                            ]
+                        },
+                        stages: [/* 10問分のデータ */]
+                    }
+                }
+            },
+            "kimetsu": {
+                name: "鬼滅の刃",
+                difficulties: {
+                    "star1": {
+                        name: "⭐☆☆（かんたん）",
+                        character: { 
+                            name: "炭治郎", 
+                            greeting: "俺はかまど炭治郎です。君からは、とても強い意志のにおいがする。俺といっしょに任務へ行ってくれるか？",
+                            transformations: [
+                                { threshold: 2, name: "水の呼吸", message: "全集中…水の呼吸。心を静かに…。💧" },
+                                { threshold: 5, name: "ヒノカミ神楽", message: "父さん…！力を貸してくれ！ヒノカミ神楽！🔥" },
+                                { threshold: 8, name: "円舞一閃", message: "善逸の技と、俺の技を合わせるんだ！⚡" },
+                                { threshold: 10, name: "赫刀（かくとう）", message: "この刀が赤くなった…！これで、鬼を斬る！🗡️" }
+                            ]
+                        },
+                        stages: [/* 10問分のデータ */]
+                    },
+                    "star2": {
+                        name: "⭐⭐☆（ふつう）",
+                        character: { 
+                            name: "善逸", 
+                            greeting: "うわーん！こわいよぉ！なんで俺がこんな所に！？頼むから守ってくれよな！たのむよぉ！",
+                            transformations: [
+                                { threshold: 2, name: "壱ノ型 霹靂一閃", message: "…(スゥー…)💤" },
+                                { threshold: 5, name: "霹靂一閃・六連", message: "…(ゴロゴロゴロ…！)⚡" },
+                                { threshold: 8, name: "霹靂一閃・神速", message: "俺は、もっと速くなれる…！💨" },
+                                { threshold: 10, name: "漆ノ型 火雷神", message: "俺が、俺自身の力で、みんなを守るんだ！🌩️" }
+                            ]
+                        },
+                        stages: [/* 10問分のデータ */]
+                    },
+                    "star3": {
+                        name: "⭐⭐⭐（むずかしい）",
+                        character: { 
+                            name: "伊之助", 
+                            greeting: "猪突猛進！ 猪突猛進！ 俺様が山の王、嘴平伊之助だ！ てめぇ、俺の子分にしてやる！ ついてこい！",
+                            transformations: [
+                                { threshold: 2, name: "獣の呼吸", message: "牙をむけ！行くぜ！🐗" },
+                                { threshold: 5, name: "漆ノ型 空間識覚", message: "フンフン…！どこにいやがるか、丸わかりだぜ！👃" },
+                                { threshold: 8, name: "思いつきの投げ裂き", message: "喰らいやがれ！俺様の新しい技だ！⚔️" },
+                                { threshold: 10, name: "山の王", message: "ホワホワするぜ！俺様がこの山の王だ！👑" }
+                            ]
+                        },
+                        stages: [/* 10問分のデータ */]
+                    }
+                }
+            }
+        };
+
+        // ... 省略 ... 
+        // 既存のステージデータは長すぎるので省略。実際のコードではここに全10話分のデータが入ります。
+        // コピー＆ペースト用に、既存のstagesデータをここに入れておきます。
+        // one-piece/star1
+        allAdventures["one-piece"].difficulties.star1.stages = [{ title: "第一話：はじまりの島", story: "ゴーイング・メリー号は、新しい島についた。\n空は青く、白いかもめがとんでいる。「よし、たんけんだ！」と、ルフィは元気よくさけんだ。\n島のさきには、見たこともない大きな木が見える。木の下には、何かキラリと光るものがあった。", quiz: { question: "ルフィが「たんけんだ！」と言ったのは、どんな気持ちから？", options: ["おなかがすいたから", "新しい冒険にわくわくしているから", "ねむいから"], correctAnswerIndex: 1, feedback: { correct: "そうだ！冒険の始まりは、いつもわくわくするよな！ししし！", incorrect: "ちがうかなー？もう一回よんでみてくれ！宝のにおいがするぞ！" } } }, { title: "第二話：光るものの正体", story: "大きな木の下につくと、光っていたのは金色にかがやくコンパスだった。\n「なんだこりゃ？」ルフィが手に取ると、コンパスのはりが、ぐるぐるとすごい速さで回りだした。\n「こいつ、次の島を教えてくれてるのかもな！」", quiz: { question: "コンパスのはりが速く回っているのは、なぜだと思う？", options: ["こわれているから", "近くにおいしい肉があるから", "ふしぎな力で、次の冒険の場所をしめしているから"], correctAnswerIndex: 2, feedback: { correct: "あたりだ！このコンパスがあれば、もっとすごい冒険ができそうだ！行くぞー！", incorrect: "んー、おしい！肉もいいけどな！ししし！ふしぎなことがおこってるぞ！" } } }, { title: "第三話：森のどうぶつたち", story: "コンパスがさす方へ歩いていくと、色とりどりの鳥や、おしゃべりなサルたちがルフィをむかえてくれた。\nサルがキーキーと何かをうったえている。「もしかして、この先に何かあるのか？」\nルフィはサルの後についていくことにした。", quiz: { question: "サルがキーキーとないていたのは、なぜ？", options: ["ルフィがおもしろい顔をしていたから", "おなかがすいていたから", "宝のありかを教えようとしていたから"], correctAnswerIndex: 2, feedback: { correct: "大正解！どうぶつたちも宝の場所を知ってるんだ！", incorrect: "うーん、たしかにオレの顔はおもしろいけどな！でも、もっと大事なことを伝えたがってるぞ！" } } }, { title: "第四話：古びた石のひ", story: "サルが案内してくれた場所には、大きな石のひがあった。表面には、むずかしい文字がたくさん書いてある。\n「読めねぇ！」とルフィがあたまをかいていると、仲間が言った。「まて、この絵は…宝の地図の一部じゃないか？」\n石のひには、洞くつの絵がほられていた。", quiz: { question: "石のひにほられていた「洞くつの絵」は、何をしめしている？", options: ["ただのいたずら書き", "宝がかくされている場所", "休けいできる場所"], correctAnswerIndex: 1, feedback: { correct: "そのとおり！宝はあの洞くつの中にあるんだ！いそごう！", incorrect: "おしい！こんな大事そうな石に、ただの絵はかかないはずだぞ！" } } }, { title: "第五話：ついにお宝発見！", story: "洞くつの中はまっ暗だったが、奥からまぶしい光がもれていた。\n光の先には、山のような金かや宝石が！「すっげー！お宝だー！」\nルフィは一番上にあった、おいしそうな肉の形をした宝石を手に取り、大声でわらった。", quiz: { question: "この物語のけつ末として、ただしいものはどれ？", options: ["ルフィは肉とまちがえて宝石を食べた", "ルフィはお宝をぜんぶ船にはこんだ", "ルフィは宝を見つけて、次の冒険にむけて元気が出た"], correctAnswerIndex: 2, feedback: { correct: "ししし！そうだ！宝も大事だが、次の冒険が一番だ！", incorrect: "ちがうぞー！宝よりもっと大事なものがあるだろ？冒険だ！" } } }, { title: "第六話：新しい仲間？", story: "お宝を見つけてよろこんでいると、洞くつのすみから、小さな子どものカブトムシが出てきた。\nそのカブトムシは、ルフィが持っている肉の形の宝石を、じーっと見ていた。\n「お！おめぇ、もしかしてこれがほしいのか？」ルフィは笑ってカブトムシに話しかけた。", quiz: { question: "カブトムシはじっと何を見ていた？", options: ["ルフィの麦わらぼうし", "洞くつの出口", "肉の形をした宝石"], correctAnswerIndex: 2, feedback: { correct: "あたりだ！こいつも食いしんぼうなのかな？ししし！", incorrect: "よーく読んでみろ！カブトムシが見てるものが書いてあるぞ！" } } }, { title: "第七話：カブトムシの案内", story: "ルフィが宝石をわたそうとすると、カブトムシは首をふって、別の方向へと歩き出した。\n「ちがうのか？じゃあ、ついてこいってことか！」\nルフィは面白くなって、カブトムシの後を追いかけた。カブトムシは、どんどん森の奥へと進んでいく。", quiz: { question: "ルフィがカブトムシを追いかけたのはなぜ？", options: ["カブトムシを捕まえるため", "もっと面白いことがありそうだと思ったから", "帰り道が分からなくなったから"], correctAnswerIndex: 1, feedback: { correct: "そうだ！冒険のにおいがプンプンするぜ！", incorrect: "ちがうぞ！オレはいつだって面白いほうを選ぶんだ！" } } }, { title: "第八話：巨大なフルーツ", story: "カブトムシがたどり着いた場所には、家のように大きなフルーツがなっている、ふしぎな木があった。\nフルーツからは、とっても甘くておいしそうなにおいがする。\n「うおー！すっげー！こんなデカいフルーツ初めて見たぞ！」ルフィの目がかがやいた。", quiz: { question: "ルフィは、何を見て「すっげー！」と言った？", options: ["大きなカブトムシ", "見たこともないほど巨大なフルーツ", "きれいな花"], correctAnswerIndex: 1, feedback: { correct: "正解だ！宴だー！みんなでこれを食おうぜ！", incorrect: "おしい！もっと、こう、腹いっぱいになりそうなものだぞ！" } } }, { title: "第九話：みんなで宴だ！", story: "ルフィは仲間をよび、みんなで巨大なフルーツを食べ始めた。「うめぇ！」\n小さなカブトムシも、フルーツの甘いしるをうれしそうに吸っている。\nどうやら、お宝の場所よりも、このフルーツの場所を教えたかったようだ。", quiz: { question: "カブトムシが本当にルフィに教えたかったことは何？", options: ["自分がいかに強いか", "隠されたお宝のありか", "みんなで食べられる、おいしいフルーツの場所"], correctAnswerIndex: 2, feedback: { correct: "そうだ！こいつ、良いやつだな！みんなで食うごはんは最高だ！", incorrect: "お宝もいいけど、もっといいものがあっただろ？みんなで楽しめるもんだ！" } } }, { title: "第十話：次の島へ！", story: "お腹がいっぱいになると、ルフィは元気百倍になった。\nカブトムシに手をふって、船にもどる。「よし、野郎ども！次の冒険に出発だ！」\nコンパスのはりは、もう次の島を指して、キラキラと光っているのだった。", quiz: { question: "この冒険で、ルフィが一番大切だと思ったことは何だろう？", options: ["一人で全部のお宝を独り占めすること", "新しい発見や、仲間と楽しむこと", "できるだけ早く家に帰ること"], correctAnswerIndex: 1, feedback: { correct: "その通りだ！冒険はいつだって、仲間と一緒だから楽しいんだ！", incorrect: "ちがうぞ！冒険で大事なのは、金銀財宝だけじゃねぇんだ！" } } }];
+        // one-piece/star2
+        allAdventures["one-piece"].difficulties.star2.stages = [{ title: "第一話：霧の島", story: "船が進むと、まわりは急に深い霧につつまれた。一寸先も見えない。\n「チッ、これじゃどっちに進めばいいか分からねぇな」とゾロは刀のつかに手をかけた。\nその時、霧の向こうから、キィン、という金属の音がかすかに聞こえた。", quiz: { question: "ゾロが刀に手をかけたのはなぜ？", options: ["刀がぬれないようにするため", "何があってもいいように、たたかう準備をしたため", "ねむいから、刀をまくらにするため"], correctAnswerIndex: 1, feedback: { correct: "そうだ。剣士ってのは、いつだって油だんしねぇもんだ。", incorrect: "おいおい、俺の刀を何だと思ってやがる。たたかうためだ。" } } }, { title: "第二話：なぞの剣士", story: "音のする方へ進むと、霧の中から一人の剣士があらわれた。\nその剣士は言った。「この島は『剣士の試練』の島。先に進みたければ、俺をたおしていくんだな」\nゾロの口もとが、ニヤリとつり上がった。", quiz: { question: "ゾロが「ニヤリ」とわらったのはなぜ？", options: ["相手がよわそうで、楽に勝てると思ったから", "強い相手とのたたかいに、血がさわだから", "おもしろいじょうだんだと思ったから"], correctAnswerIndex: 1, feedback: { correct: "フン、分かってるじゃねぇか。強いやつとたたかうのはきらいじゃねぇ。", incorrect: "あまく見るな。どんな相手でも、俺は全力でいく。" } } }, { title: "第三話：三刀流のきらめき", story: "二人の剣士がはげしく刀を交える。相手の動きは速く、するどい。\nしかし、ゾロは相手の太刀すじを冷静に見きわめていた。「好機！」\nゾロは三本の刀を使い、相手の剣をはじきとばした。「鬼斬り！」", quiz: { question: "ゾロが勝てた一番の理由は？", options: ["相手より力がつよかったから", "相手の動きをよく見て、チャンスをねらっていたから", "刀が三本あったから"], correctAnswerIndex: 1, feedback: { correct: "そうだ。力まかせだけじゃ、本当の強さにはとどかねぇ。", incorrect: "刀の数じゃねぇ。どう使うかが問題だ。" } } }, { title: "第四話：みとめられた強さ", story: "剣士はまいった、と頭を下げた。「見事なうでまえだ。おぬしなら、この島の奥にある『鋼の木』から、最高の刀を作れるだろう」\n剣士は一枚の地図をゾロにわたした。\nそこには、島の中心にある大きな木がしるされていた。", quiz: { question: "この「鋼の木」とは、何のことだろう？", options: ["とてもかたい、鋼鉄のような木", "鋼でできた、作り物の木", "食べると体が鋼になる、ふしぎな木の実"], correctAnswerIndex: 0, feedback: { correct: "フン、そのとおりだ。そんな木から作った刀…、ためしてみたいもんだ。", incorrect: "ばかなことを言うな。きたえられた刀は、きたえられた木から作られるもんだ。" } } }, { title: "第五話：新たなる誓い", story: "ゾロが鋼の木を見つけると、そこには刀を作るための道具がすべてそろっていた。\nゾロは新しい刀を手に、空にむかってちかった。「この刀で、必ず世界一になる」\n霧がはれ、進むべき道がはっきりと見えていた。", quiz: { question: "最後の文の「進むべき道」とは、何のこと？", options: ["船にもどるための道", "世界一の大剣豪になる、という目標", "次のレストランへ行く道"], correctAnswerIndex: 1, feedback: { correct: "ああ。俺の道は、ただ一つだ。", incorrect: "…腹はへったが、今はこっちが先だ。" } } }, { title: "第六話：とちゅうの休息", story: "新しい刀を手に入れ、気を良くしたゾロは船にもどることにした。\n「よし、こっちだな」と自信満々に歩き出すが、同じような景色が続いている。\n気づけば、また鋼の木の前に戻ってきてしまっていた。「…おかしいな」", quiz: { question: "ゾロが同じ場所にもどってきてしまったのはなぜ？", options: ["道に迷ってしまったから", "忘れ物を取りにもどったから", "もっと修行がしたかったから"], correctAnswerIndex: 0, feedback: { correct: "…うるせぇ。ちょっと考え事をしてただけだ。", incorrect: "ちがう。…いや、まあ、そうかもしれん。" } } }, { title: "第七話：滝の裏の洞くつ", story: "道に迷ったついでに、ゾロは修行をすることにした。近くの滝で、水の流れに逆らって刀をふるう。\nすると、滝の水の勢いが一瞬だけ弱まり、裏に洞くつがあるのが見えた。\n「ほう、面白い」と、ゾロは洞くつの中へと入っていった。", quiz: { question: "ゾロはなぜ滝の裏の洞くつに入った？", options: ["雨をしのぐため", "何か面白いものや、強い敵がいるかもしれないと思ったから", "近道だと思ったから"], correctAnswerIndex: 1, feedback: { correct: "フン、剣士のカンだ。こういう場所には、何かがあるもんだ。", incorrect: "近道かどうかは入ってみねぇと分からねぇ。だが、面白そうなのは確かだ。" } } }, { title: "第八話：動く石像", story: "洞くつの奥には、刀を持った石像が一体、静かに立っていた。\nゾロが近づくと、石像はゴゴゴと音を立てて動き出し、刀をかまえた。\n「なるほどな。こいつがこの島の、本当の試練というわけか」", quiz: { question: "ゾロの言う『本当の試練』とはどういう意味？", options: ["石像をたおさないと、外に出られない", "さっきの剣士よりも、この石像の方が手ごわい相手だと感じた", "石像が宝物を持っていると思った"], correctAnswerIndex: 1, feedback: { correct: "ああ。こいつからは、さっきのやつとは違う、ただならぬ気配がする。", incorrect: "宝もいいが、俺の目的は強くなることだ。" } } }, { title: "第九話：背中の傷は剣士の恥", story: "石像の攻撃は、重くてするどい。ゾロは何度も攻撃を受けそうになるが、紙一重でかわし続ける。\n「ここで背を向けたら、剣士の名がすたる！」\nゾロは真正面から石像の攻撃を受け止め、カウンターの一撃をたたきこんだ。", quiz: { question: "ゾロが正面からたたかったのはなぜ？", options: ["にげ道がなかったから", "自分の信念として、強敵からにげたくなかったから", "石像のうしろに回り込めなかったから"], correctAnswerIndex: 1, feedback: { correct: "当たり前だ。背中の傷は剣士の恥だぜ。", incorrect: "方法の問題じゃねぇ。心のあり方の問題だ。" } } }, { title: "第十話：さらなる高みへ", story: "石像は動きを止め、元の静かな石にもどった。試練を乗りこえたのだ。\n洞くつの出口は、船着き場へとまっすぐ続いていた。「フン、世話のやける石像だ」\nゾロは、また一つ強くなった自分を感じながら、仲間のもとへともどるのだった。", quiz: { question: "この冒険を通して、ゾロが得た一番大きなものは何？", options: ["新しい刀", "宝の地図", "困難を乗りこえ、さらに強くなったという実感"], correctAnswerIndex: 2, feedback: { correct: "そうだ。刀も大事だが、それを使いこなす自分が成長しなけりゃ意味がねぇ。", incorrect: "形あるものだけが、手に入れたものじゃねぇんだ。" } } }];
+        // one-piece/star3
+        allAdventures["one-piece"].difficulties.star3.stages = [{ title: "第一話：香りの島", story: "上陸した島は、今までかいだことのない、甘くて香ばしい香りに満ちていた。\n「この香りは…！未知のスパイスか、それとも極上のフルーツか…？」\nサンジは料理人としての血がさわぎ、香りの元を探し始めた。", quiz: { question: "サンジが『血がさわいだ』のはなぜ？", options: ["たたかいの相手を見つけたから", "新しい料理のアイデアがうかんで、興奮したから", "ケガをして血が出たから"], correctAnswerIndex: 1, feedback: { correct: "当然だ。料理人にとって、最高の食材との出会いは、何よりの喜びだからな。", incorrect: "おいおい、俺はコックだぞ。レディにささげる料理のことしか頭にねぇ。" } } }, { title: "第二話：元気のない花", story: "香りの中心には、虹色にかがやく大きな花があった。しかし、よく見ると花は少し元気がなく、葉の色も悪い。\n「おかしいな。これだけの花なら、もっと生き生きしているはずだ」\nサンジは花のまわりの土を調べ始めた。", quiz: { question: "サンジが『おかしい』と思った、一番の理由は何？", options: ["花の香りが強すぎたから", "花の見た目の美しさと、元気のなさが合わないから", "花に虫がついていたから"], correctAnswerIndex: 1, feedback: { correct: "その通りだ。見た目だけじゃねぇ、物事の本質を見抜くのが大事なんだ。", incorrect: "もっとよく観察しろ。問題は、もっと根深いところにある。" } } }, { title: "第三話：かれ果てた水辺", story: "土はカラカラにかわいていた。近くに水辺があるはずだと考えたサンジが、少しはなれた場所をさがすと、かれ果てた泉があった。\nよく見ると、泉の水の流れが、大きな岩でせき止められている。\n「なるほど、こいつが原因か」", quiz: { question: "花に元気がなかったのは、なぜ？", options: ["悪い病気にかかっていたから", "岩が邪魔で、泉の水が届かなかったから", "太陽の光が足りなかったから"], correctAnswerIndex: 1, feedback: { correct: "ああ。どんな美しい花も、水がなけりゃ生きていけねぇからな。", incorrect: "原因と結果を考えるんだ。なぜそうなったのか、理由を突き止めろ。" } } }, { title: "第四話：悪魔風脚（ディアブルジャンブ）", story: "サンジは足を高く上げ、こう言った。「てめェらのせいで、レディにささげる花が台無しになるところだったじゃねぇか！」\n真っ赤に燃える足で岩をけとばすと、岩はこなごなにくだけちった。\n泉からあふれ出た水が、花の方へとながれていく。", quiz: { question: "サンジは、誰（何）に向かっておこっている？", options: ["一緒に来た仲間", "花の元気をなくさせた、岩という存在", "自分自身のふがいなさ"], correctAnswerIndex: 1, feedback: { correct: "そうだ。レディを悲しませるものは、たとえ岩だろうと俺が許さねぇ！", incorrect: "勘違いするな。俺の怒りは、いつだって美しいものを守るためにある。" } } }, { title: "第五話：虹色のデザート", story: "水を得た花は、あっという間に元気を取りもどし、あたりにはさらに良い香りが広がった。\nサンジはその花から少しだけ花粉をもらい、船にもどって美しいデザートを作った。\n「ナミさん、ロビンちゃん。めしあがれ」彼の顔は、とても満足そうだった。", quiz: { question: "サンジが一番『満足そう』だったのは、なぜ？", options: ["めずらしい食材を手に入れたから", "強い敵をたおしたから", "自分の料理で、大切な仲間を喜ばせることができたから"], correctAnswerIndex: 2, feedback: { correct: "当たり前だ。コックの幸せは、客の笑顔以外にありえねぇんだ。", incorrect: "食材はあくまで手段だ。目的は、いつだって一つしかねぇ。" } } }, { title: "第六話：もう一つの食材", story: "花に水が戻ったことで、泉の周りには小さなキノコが一斉に生えてきた。\nそのキノコは、宝石のように青く光っている。「ほう、これは…『月光ダケ』じゃねぇか」\nめったに見つからない、最高のスープの材料だった。", quiz: { question: "なぜ『月光ダケ』が急に生えてきたのだろう？", options: ["サンジが種をまいたから", "花と同じように、水が足りずに隠れていたから", "夜になったから"], correctAnswerIndex: 1, feedback: { correct: "正解だ。物事の本当の価値は、ふさわしい環境があってこそ引き出されるんだ。", incorrect: "よく考えろ。花に起こったことと同じことが、キノコにも起こったんだ。" } } }, { title: "第七話：料理人の知恵", story: "サンジがキノコを採っていると、島の動物たちが集まってきた。みんなお腹をすかせているようだ。\nしかし、月光ダケは人間にはごちそうだが、動物には毒になることをサンジは知っていた。\n「お前らには、もっといいものを食わせてやるよ」", quiz: { question: "サンジはなぜ動物にキノコをあげなかった？", options: ["全部自分のものにしたかったから", "動物たちがキノコを嫌いだと知っていたから", "動物たちにとって、そのキノコが危険だと知っていたから"], correctAnswerIndex: 2, feedback: { correct: "そうだ。知識は、誰かを守るために使うもんだ。", incorrect: "俺がそんなケチな男に見えるか？理由があるんだよ。" } } }, { title: "第八話：即席レストラン", story: "サンジは島の木の実や他のキノコを集め、手早く調理して動物たちにごちそうをふるまった。\n炎を上げた足技で、あっという間に温かい料理ができあがる。\n動物たちはおいしそうに料理を食べ、サンジの周りでうれしそうにしていた。", quiz: { question: "サンジが料理で示したかったことは何？", options: ["自分の料理の腕前が一番だと見せつけること", "食材への感謝と、食べるものへの思いやり", "ただの暇つぶし"], correctAnswerIndex: 1, feedback: { correct: "フン。腹がへってるやつに、腹いっぱいの幸せをやる。それがコックの仕事だ。", incorrect: "俺の料理は、いつだって愛がこもってるんだぜ。" } } }, { title: "第九話：最高のスープ", story: "船に戻ったサンジは、採ってきた月光ダケと虹色の花の花粉を使って、最高のスープを作った。\nそのスープを一口飲むと、体のすみずみまで、温かくて幸せな気持ちが広がっていく。\n「我ながら、傑作だ」サンジは静かにつぶやいた。", quiz: { question: "スープが『最高』だったのは、なぜ？", options: ["高価な食材だけを使ったから", "食材の良さを引き出す、サンジの腕と愛情があったから", "仲間がお世辞を言ったから"], correctAnswerIndex: 1, feedback: { correct: "ああ。最高の食材には、最高の愛が必要なんだ。", incorrect: "食材だけじゃダメだ。作り手の心が、味を決めるんだ。" } } }, { title: "第十話：コックの幸せ", story: "スープを飲んだナミとロビンは、花のような笑顔で「おいしい！」と言った。\nサンジはその笑顔を見て、満足そうにタバコをふかした。\n彼にとって、この瞬間のために、どんな苦労も乗り越えられるのだった。", quiz: { question: "この冒険でサンジが見つけた『一番の宝物』とは何？", options: ["虹色の花と月光ダケ", "仲間の心からの笑顔", "動物の子分たち"], correctAnswerIndex: 1, feedback: { correct: "フン…当たり前だ。レディの笑顔に勝る宝なんざ、この世に存在しねぇ。", incorrect: "お前にはまだ分からねぇか。俺が何のために料理を作るのかをな。" } } }];
+        // kimetsu/star1
+        allAdventures["kimetsu"].difficulties.star1.stages = [{ title: "第一話：ふしぎな森", story: "炭治郎は、任務でとある村の近くの森へやってきた。\n昼間なのに、森の中はうす暗く、しめった土のにおいがする。\n炭治郎は、地面にのこされた、見たことのない動物の足あとを見つけた。「これは…鬼の足あとじゃない。でも、なにかいるぞ」", quiz: { question: "炭治郎が「なにかいるぞ」と思ったのは、なぜ？", options: ["だれかの声がしたから", "地面にふしぎな足あとがあったから", "おなかがすいたから"], correctAnswerIndex: 1, feedback: { correct: "その通りだ。俺は鼻がきくんだ。注意ぶかく進もう。", incorrect: "おしい。もう一度よく見てくれ。地面に大切なヒントがあるはずだ。" } } }, { title: "第二話：森のぬし", story: "足あとをたどっていくと、森の奥に大きな湖があった。\n湖のまん中には、きずだらけの大きな鹿が、じっとこちらを見ている。\nその鹿の目からは、かなしみのにおいがした。どうやら、この森を鬼から守っていたぬしのようだ。", quiz: { question: "鹿の目から「かなしみのにおい」がしたのは、なぜだろう？", options: ["おなかがすいていたから", "鬼とのたたかいで、たくさんの仲間をうしなったから", "ねむかったから"], correctAnswerIndex: 1, feedback: { correct: "正解だ…。この鹿の思いも、俺が断ち切るわけにはいかない。", incorrect: "ちがうようだ。この鹿の気持ちを考えてみてくれ。なぜ、かなしい目をしてるんだろう。" } } }, { title: "第三話：鹿との約束", story: "炭治郎が近づくと、鹿は頭を下げて何かをうったえているようだった。\nその目からは、助けを求める強い意志が感じられた。\n「分かった。君の森は、俺が守る」炭治郎は強くうなずき、約束した。鹿は安心したように、静かに森の奥を指し示した。", quiz: { question: "炭治郎が鹿と「約束」できたのは、なぜ？", options: ["鹿が人間の言葉を話したから", "鹿の気持ちを、においや目で感じ取ったから", "鹿がおいしい木の実をくれたから"], correctAnswerIndex: 1, feedback: { correct: "そうだ。言葉がなくても、心で通じ合えることがあるんだ。", incorrect: "そうじゃないんだ。相手の心を読み取ろうとすることが、一番大切なんだ。" } } }, { title: "第四話：鬼のすみか", story: "鹿が示した先には、いやな血のにおいがただよう洞くつがあった。\n「間違いない、この奥に鬼がいる！」炭治郎は刀をにぎりしめ、静かに呼吸を整えた。\n水の呼吸。心を落ち着かせ、どんな時も冷静であるために。", quiz: { question: "炭治郎が「水の呼吸」を使ったのはなぜ？", options: ["のどがかわいたから", "たたかいの前に、心をしずめて集中するため", "火をおこすため"], correctAnswerIndex: 1, feedback: { correct: "その通り。おそれや怒りで心を見失ってはいけない。", incorrect: "呼吸は、ただ息をすることじゃない。心と体をつなぐ、大事な技なんだ。" } } }, { title: "第五話：夜明けの光", story: "洞くつの中の鬼は、手ごわい相手だった。しかし、炭治郎は鹿との約束を思い出し、勇気をふりしぼった。\n朝日がのぼりはじめ、光が洞くつにさしこむと、鬼はちりとなって消えていった。\n森に、また平和な朝がもどってきた。", quiz: { question: "鬼が消えてしまったのは、なぜ？", options: ["炭治郎がとても強かったから", "夜が明けて、太陽の光をあびたから", "おなかがいっぱいになったから"], correctAnswerIndex: 1, feedback: { correct: "そうだ！鬼は太陽の光が弱点なんだ。森を守ることができた。ありがとう！", incorrect: "それも理由の一つだが、一番大きな理由があるはずだ。鬼の弱点を思い出してくれ。" } } }, { title: "第六話：村へのお知らせ", story: "鬼をたおした後、炭治郎は村へ向かった。村の人たちは、森をこわがって、元気がなかった。\n炭治郎は言った。「もう大丈夫です。森の鬼は、俺がたおしました」\nしかし、村の人々は半信半疑で、まだ不安そうな顔をしている。", quiz: { question: "村の人たちがすぐに信じなかったのは、なぜだろう？", options: ["炭治郎がこわい顔をしていたから", "長い間、鬼におびえていたので、すぐには安心できなかったから", "炭治郎がうそをついていると思ったから"], correctAnswerIndex: 1, feedback: { correct: "そうなんだ。人の心の傷は、すぐには消えない。でも、俺はあきらめない。", incorrect: "人の心を考えるんだ。ずっとこわい思いをしていたら、どう思うだろう？" } } }, { title: "第七話：信頼のしるし", story: "炭治郎が困っていると、あの森のぬしの鹿が、村まで下りてきた。\n鹿は炭治郎の隣にすわり、おだやかな目で村人たちを見た。\nそれを見た村人たちは、「ああ、本当なんだ」と、ようやく安心した顔になった。", quiz: { question: "鹿が村へやって来たのは、なぜだと思う？", options: ["村の食べ物をさがしに来た", "炭治郎が本当のことを言っていると、村人に伝えるため", "道にまよったから"], correctAnswerIndex: 1, feedback: { correct: "そうなんだ。鹿も、村と森が仲良くしてくれることを願っているんだ。", incorrect: "鹿の行動には、きっと意味があるはずだ。炭治郎を助けようとしているんだ。" } } }, { title: "第八話：感謝の気持ち", story: "村人たちは、炭治郎にたくさんのお礼を言った。そして、森の動物たちのために、木の実や野菜を森の入り口に置くようになった。\n「これで、森と村がまた仲良くなれる」\n炭治郎は、その光景を見て、自分のことのようにうれしくなった。", quiz: { question: "炭治郎がうれしくなったのは、なぜ？", options: ["お礼にお金をもらえたから", "人と自然が助け合う、あたたかい関係がもどったから", "有名になれたから"], correctAnswerIndex: 1, feedback: { correct: "ありがとう。失われたものが、また元にもどるのは、とてもうれしいことだ。", incorrect: "俺が求めているのは、お金や名声じゃない。みんなの笑顔なんだ。" } } }, { title: "第九話：小さな花のにおい", story: "村を去る日、一人の女の子が炭治郎に小さな花をわたしてくれた。「ありがとう、お兄ちゃん」\nその花からは、とてもやさしくて、あたたかいにおいがした。\nそれは、人の感謝の気持ちがこもった、特別なにおいだった。", quiz: { question: "花から『特別』なにおいがしたのは、なぜ？", options: ["とてもめずらしい花だったから", "女の子の「ありがとう」という気持ちが、こめられていたから", "炭治郎の鼻が良すぎるから"], correctAnswerIndex: 1, feedback: { correct: "その通りだ。気持ちには、においがあるんだ。俺にはそれが分かる。", incorrect: "ただの花じゃない。そこには、目に見えない大切なものがつまっているんだ。" } } }, { title: "第十話：次の任務へ", story: "炭治郎は、もらった花を大切にしまい、次の任務へと向かう。\n「どんなにつらいことがあっても、俺はくじけない」\n人々の笑顔と、あたたかい花のにおいが、炭治郎に新しい勇気をくれたのだった。", quiz: { question: "この冒険で、炭治郎が改めて感じたことは何？", options: ["鬼をたおすことだけが、鬼殺隊の仕事ではないこと", "一人でたたかうことの重要性", "花は食べられないということ"], correctAnswerIndex: 0, feedback: { correct: "そうだ。人の心をつなぎ、守ること。それも俺たちの大切な仕事なんだ。", incorrect: "もう一度、物語をふり返ってみてくれ。たたかいの後に、何が起こった？" } } }];
+        // kimetsu/star2
+        allAdventures["kimetsu"].difficulties.star2.stages = [{ title: "第一話：不気味な屋しき", story: "善逸が気づくと、一人で大きな屋しきの中にいた。「いやだーっ！炭治郎はどこ行ったんだよー！」\nあたりはシーンと静まりかえっている。でも、善逸の耳には、トクン…トクン…という、ふしぎな音が聞こえていた。\n「ひぃ！心臓の音！？誰の！？」", quiz: { question: "善逸がこわがっている一番の理由は何？", options: ["お腹がすいているから", "一人ぼっちで、何の音か分からないから", "ねむいから"], correctAnswerIndex: 1, feedback: { correct: "そうなんだよぉ！わけが分からないのが一番こわいんだよぉ！", incorrect: "腹もへったけど！それどころじゃないんだってば！" } } }, { title: "第二話：女の子のなき声", story: "こわくて動けないでいると、今度はしくしくと、女の子のなき声が聞こえてきた。\n「え…？誰かいるの？」善逸はこわがりながらも、音のする方へ、そろりそろりと近づいていった。\n守らなければ、という気持ちが、少しだけゆうきをくれた。", quiz: { question: "善逸が女の子のところへ向かったのはなぜ？", options: ["にぎやかな方が楽しそうだから", "助けをよぶ声を聞いて、守らなければと思ったから", "女の子のおかしをうばうため"], correctAnswerIndex: 1, feedback: { correct: "そうなんだよ…こわいけど、女の子を一人にはしておけないだろ…！", incorrect: "俺がそんなひどいことするわけないだろ！" } } }, { title: "第三話：雷の音", story: "部屋のすみで、小さな女の子がふるえていた。その前には、大きな鬼が立ちはだかっていた！\n「ひぃぃぃぃ！」あまりのこわさに、善逸は気をうしなってしまった。\nカッと、いかずちが光ったような気がした。", quiz: { question: "善逸が気をうしなったのはなぜ？", options: ["あまりにもおどろいて、こわかったから", "鬼の術にかかってしまったから", "ねむけがおそってきたから"], correctAnswerIndex: 0, feedback: { correct: "そうなんだよぉ…あまりにもこわくて…プツンって…。あれ？", incorrect: "ちがうんだよ！もう、こわさのげんかいをこえたんだ！" } } }, { title: "第四話：気づいた時には", story: "善逸が目を覚ますと、なぜか鬼はたおれていた。女の子は、目をキラキラさせて善逸を見ている。\n「お兄ちゃんが、かみなりのように速く動いて、助けてくれたの！」\n善逸は何も覚えていない。「え？俺が？うそだろ！？」", quiz: { question: "善逸が鬼をたおせたのはなぜ？", options: ["女の子が協力してくれたから", "気をうしなっている間に、本当の力を発揮したから", "鬼がかってにこけたから"], correctAnswerIndex: 1, feedback: { correct: "えええ！？じゃあ俺、ねてる間にたたかったの！？信じられない！", incorrect: "そんなわけないだろ！あんな大きな鬼が！" } } }, { title: "第五話：ほめられた！", story: "屋しきから出ると、炭治郎が心配そうに待っていた。\n女の子が事情を話すと、炭治郎は善逸の頭をなでて言った。「すごいじゃないか善逸！よくがんばったな！」\n善逸は、てれくさそうに笑った。「えへへ…まあ、俺にかかればこんなもんよ！」", quiz: { question: "最後に善逸が元気になったのはなぜ？", options: ["炭治郎にほめられて、うれしくなったから", "おいしいごはんが食べられるから", "やっとねむれるから"], correctAnswerIndex: 0, feedback: { correct: "まあね！俺だってやるときはやるんだからな！えっへん！", incorrect: "それもうれしいけどさ！やっぱ仲間は大事だよな！" } } }, { title: "第六話：チュン太郎の知らせ", story: "炭治郎たちと合流して安心したのもつかの間、善逸のすずめ、チュン太郎が必死に何かをうったえてきた。\n「チュン！チュン！」と、さっきの屋しきの方を指している。\n「えー！またあそこにもどるの！？絶対いやだー！」善逸は耳をふさいだ。", quiz: { question: "チュン太郎が伝えたかったことは何だろう？", options: ["お腹がすいたということ", "さっきの屋しきに、まだ何か問題が残っていること", "善逸と遊びたいということ"], correctAnswerIndex: 1, feedback: { correct: "そうみたいだよ…！うぅ、でもこわいもんはこわいんだよぉ！", incorrect: "こいつがただ遊びたいだけで俺をあんな場所によぶわけないだろ！たぶん！" } } }, { title: "第七話：残された音", story: "炭治郎に説得され、善逸はしぶしぶ屋しきにもどった。すると、壁の中から、コツ…コツ…という小さな音が聞こえてくる。\nそれは、鬼の音でも、人の音でもない。何かが、必死に助けを求めているような音だった。\n「なんだ…？この音…」", quiz: { question: "善逸がこの音を不思議に思ったのはなぜ？", options: ["とても大きな音だったから", "今まで聞いたことのない、助けを求めるような音だったから", "歌っているように聞こえたから"], correctAnswerIndex: 1, feedback: { correct: "そうなんだ…こわいけど、でも、放っておけないような音なんだ…。", incorrect: "ちがうんだよ！もっと、こう…心にひっかかるような音だったんだ！" } } }, { title: "第八話：隠された部屋", story: "善逸が音のする壁に耳を当てると、その奥に小さな部屋があることが分かった。\n「ここだ！」炭治郎が壁をこわすと、中には鬼に捕まっていた村の犬がいた。\n犬は善逸にかけより、うれしそうにしっぽを振った。", quiz: { question: "善逸が隠された部屋を見つけられたのはなぜ？", options: ["偶然、壁に穴があいていたから", "犬が大きな声で鳴いていたから", "善逸の優れた耳が、かすかな音を聞き分けたから"], correctAnswerIndex: 2, feedback: { correct: "えへへ、まあね。俺の耳は、誰にも負けないんだからな！", incorrect: "俺の耳の良さをなめちゃだめだぞ！" } } }, { title: "第九話：本当の勇気", story: "犬を助け出し、女の子のもとへ返してあげると、女の子は「お兄ちゃん、本当にありがとう！」と満面の笑みを見せた。\n善逸は、その笑顔を見て、胸があたたかくなるのを感じた。\n「こわくても、にげちゃダメな時もあるんだな…」と、小さくつぶやいた。", quiz: { question: "善逸が学んだ『本当の勇気』とは何だろう？", options: ["何もこわがらないこと", "こわいという気持ちを乗りこえて、誰かのために行動すること", "大きな声を出すこと"], correctAnswerIndex: 1, feedback: { correct: "うん…そうかもしれない。俺、ちょっとだけ強くなれたかな…。", incorrect: "こわくない人間なんていないよ！こわくても、やるべきことをやるのが大事なんだと思う…たぶん。" } } }, { title: "第十話：ほこらしい気持ち", story: "帰り道、善逸は助けた犬に、ほえられながらもなぜかなつかれていた。\n「なんで俺だけ！」とさわぎながらも、その顔はまんざらでもなさそうだ。\n誰かを守れたという事実が、善逸にとって、何よりのほこらしさになっていた。", quiz: { question: "善逸が『まんざらでもなさそう』なのはなぜ？", options: ["犬がうるさくて、あきらめているから", "自分のしたことが、良い結果につながって、うれしいから", "早くごはんが食べたいから"], correctAnswerIndex: 1, feedback: { correct: "まあな！俺だって、たまには役に立つんだぞ！", incorrect: "それもあるけど！でも、それだけじゃないんだよなー！" } } }];
+        // kimetsu/star3
+        allAdventures["kimetsu"].difficulties.star3.stages = [{ title: "第一話：山の王のちょうせん", story: "「この山のどこかに、すげぇつええ鬼がいるらしいな！」伊之助は、鼻をフンフンならして言った。\n「よっしゃあ！どっちが先にそいつを見つけてたおすか、勝負だ、勝負ー！」\n伊之助はそうさけぶと、ものすごい速さで山の奥へと走っていった。", quiz: { question: "伊之助が勝負をしようと言い出したのはなぜ？", options: ["一人だとさみしいから", "自分の力をためしたくて、うずうずしているから", "だれかと競争しないと、やる気が出ないから"], correctAnswerIndex: 1, feedback: { correct: "そのとおりだ！強いやつとたたかうのが一番おもしれぇ！", incorrect: "ちげぇよ！俺様は、いつでもやる気にみちあふれてんだよ！" } } }, { title: "第二話：まぎらわしいにおい", story: "山の獣たちのにおいが、たくさんまざり合っている。「くそっ！これじゃ鬼のにおいが分かんねぇじゃねぇか！」\n伊之助は腹を立てて、近くの木に頭つきをした。\n「イライラするぜ！こうなったら、この山ごと探しつくしてやる！」", quiz: { question: "伊之助が腹を立てている、一番の理由は何？", options: ["道にまよったから", "おなかがすいたから", "思い通りに鬼を見つけられず、もどかしいから"], correctAnswerIndex: 2, feedback: { correct: "そうだ！俺様のやり方でいかねぇと、気がすまねぇんだ！", incorrect: "腹はいつでもへってんだよ！そんなことじゃねえ！" } } }, { title: "第三話：獣の呼吸・漆ノ型", story: "伊之助は立ち止まり、両手を地面につけて集中し始めた。「獣の呼吸、漆ノ型、空間識覚」\n空気のわずかなゆれを感じ取り、生き物のいる場所をさがす技だ。\n「…見つけた。あそこの岩かげだ！」", quiz: { question: "伊之助が、急に静かになって集中し始めたのはなぜ？", options: ["つかれて休んでいるから", "ただ力まかせに探すのではなく、自分の得意な技で鬼を見つけようとしたから", "かくれている鬼をおどろかせようとしたから"], correctAnswerIndex: 1, feedback: { correct: "フン！俺様は、ただのイノシシじゃねぇってことだ！", incorrect: "ちげぇ！もっと確実な方法を思いついただけだ！" } } }, { title: "第四話：猪突猛進！", story: "鬼は岩かげで、伊之助が来るのを待ちぶせしていた。しかし、伊之助は技でそのことに気づいている。\n「そこなのは分かってんだよ！」伊之助は二本の刀をかまえ、まっすぐに鬼へとつっこんでいった。\n「猪突猛進！ 猪突猛進！」", quiz: { question: "伊之助が待ちぶせに気づきながら、まっすぐつっこんだのはなぜ？", options: ["相手の作戦の、さらに上を行こうとしたから", "こまかい作戦を考えるのが、苦手だから", "わなだと気づかなかったから"], correctAnswerIndex: 0, feedback: { correct: "そうだ！小細工なんざ、俺様の力でふきとばしてやる！", incorrect: "あ？苦手じゃねぇ！必要がねぇだけだ！" } } }, { title: "第五話：ホワホワするぜ！", story: "たたかいが終わり、伊之助は刀を鞘におさめた。山の王として、また一つ強くなった。\n「ふん、まあこんなもんか」と、ぶっきらぼうに言った。\nでも、権八郎（炭治郎）にほめられるところを想像すると、なぜだか胸のあたりがホワホワするのだった。", quiz: { question: "伊之助の胸が『ホワホワ』したのはなぜ？", options: ["たたかいで、体をあたためすぎたから", "仲間にみとめられるのが、本当はうれしいから", "おいしいものを食べることを想像したから"], correctAnswerIndex: 1, feedback: { correct: "な、なんだそりゃ！知らねぇ！…でも、まあ…悪くねぇ気分だ…。", incorrect: "食いもんのことじゃねぇ！なんか、こう…むずむずする感じだ！" } } }, { title: "第六話：山のぬしとの出会い", story: "鬼を倒して得意になっていると、森の奥から、伊之助よりもずっと大きなイノシシが現れた。\nそれは、この山をずっと守ってきた「ぬし」だった。\nぬしは、伊之助をじっと見つめ、フン、と鼻をならした。", quiz: { question: "山のぬしは、伊之助に対してどう思っているだろう？", options: ["敵だと思って、おこっている", "伊之助の力をみとめて、様子を見ている", "食べ物だと思っている"], correctAnswerIndex: 1, feedback: { correct: "そうだ！こいつ、俺様の実力をためしてやがるな！", incorrect: "ちげぇ！俺様を食おうなんざ、百万年早ぇ！" } } }, { title: "第七話：力くらべ", story: "「おもしれぇ！俺様とどっちが強いか、勝負しろ！」伊之助は、ぬしに向かって走り出した。\n伊之助とぬしは、何度もぶつかり合った。森じゅうに、すごい音がひびきわたる。\nしかし、何度やっても、なかなか勝負がつかない。", quiz: { question: "勝負がつかないのは、なぜ？", options: ["伊之助が手加減しているから", "ぬしがとてもよわいから", "二人の力が、ほとんど同じくらいだから"], correctAnswerIndex: 2, feedback: { correct: "やるじゃねぇか、お前！だが、まだまだ！", incorrect: "てかげん？そんなもん、俺様の辞書にはねぇ！" } } }, { title: "第八話：共闘", story: "力くらべをしていると、別の場所から、新たな鬼の気配がした。しかも、一匹ではない。\nぬしは、ピタリと動きを止め、鬼のいる方向をにらんだ。伊之助も、同じ方向を見る。\n二人は、言葉を交わさずとも、同じ敵を認識した。", quiz: { question: "伊之助とぬしが、たたかいをやめたのはなぜ？", options: ["つかれてしまったから", "もっと大きな、共通の敵が現れたから", "飽きてしまったから"], correctAnswerIndex: 1, feedback: { correct: "そうだ！今はこいつと争ってる場合じゃねぇ！", incorrect: "俺様が飽きるわけねぇだろうが！" } } }, { title: "第九話：山の王の連携", story: "伊之助とぬしは、同時に鬼の群れに向かって走り出した。\nぬしが鬼を吹き飛ばし、伊之助がそのすきに刀で切り裂く。\n一人で戦うよりも、ずっと速く、強く、鬼たちを圧倒していった。", quiz: { question: "二人がうまく連携できたのは、なぜだろう？", options: ["前もって作戦を立てていたから", "お互いの力を認め合い、自然と役割分担ができたから", "偶然、動きが合っただけ"], correctAnswerIndex: 1, feedback: { correct: "フン！こいつ、なかなかやるじゃねぇか！俺様の子分にしてやってもいい！", incorrect: "偶然じゃねぇ！これが、山の王の実力だ！" } } }, { title: "第十話：認め合う強さ", story: "すべての鬼を倒すと、ぬしは伊之助の頭を、鼻でやさしくこすった。それは、山の王としての強さを認めた、あいさつだった。\n「へへん！当たり前だ！」伊之助は、誇らしげに胸をはった。\n本当の強さとは、ただ一人で勝つことだけではないと、少しだけ学んだのだった。", quiz: { question: "この冒険で、伊之助が学んだことは何？", options: ["イノシシは友達", "仲間と力を合わせることで、もっと強くなれること", "鬼は群れで現れること"], correctAnswerIndex: 1, feedback: { correct: "…まあな！俺様が本気を出せば、誰とだって組めるんだよ！", incorrect: "友達じゃねぇ！子分だ、子分！" } } }];
+
+
+        // --- DOM要素の取得 ---
+        const courseSelectionScreen = document.getElementById('course-selection-screen');
+        const difficultySelectionScreen = document.getElementById('difficulty-selection-screen');
+        const mainGame = document.getElementById('main-game');
+        const clearScreen = document.getElementById('clear-screen');
+        
+        const characterName = document.getElementById('character-name');
+        const characterMessage = document.getElementById('character-message');
+        const storyTitle = document.getElementById('story-title');
+        const storyText = document.getElementById('story-text');
+        const quizArea = document.getElementById('quiz-area');
+        const quizQuestion = document.getElementById('quiz-question');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackArea = document.getElementById('feedback-area');
+        const feedbackText = document.getElementById('feedback-text');
+        const nextButton = document.getElementById('next-button');
+        const backToCourseSelectionBtn = document.getElementById('back-to-course-selection');
+        const backToStartButton = document.getElementById('back-to-start-button');
+        const gaugeText = document.getElementById('gauge-text');
+        const gaugeBar = document.getElementById('gauge-bar');
+        const finalScore = document.getElementById('final-score');
+        const clearMessage = document.getElementById('clear-message');
+
+        // --- ゲームの状態管理 ---
+        let currentCourseKey = '';
+        let currentDifficultyKey = '';
+        let currentAdventure;
+        let currentStageIndex = 0;
+        let correctAnswersCount = 0; // 正解数をカウント
+
+        // --- イベントリスナー ---
+        document.querySelectorAll('.btn[data-course]').forEach(button => {
+            button.addEventListener('click', (e) => {
+                currentCourseKey = e.currentTarget.dataset.course;
+                showDifficultySelection(currentCourseKey);
+            });
+        });
+        
+        backToCourseSelectionBtn.addEventListener('click', showCourseSelection);
+        backToStartButton.addEventListener('click', showCourseSelection);
+        nextButton.addEventListener('click', loadNextStage);
+
+        // --- 関数 ---
+        function showCourseSelection() {
+            difficultySelectionScreen.classList.add('hidden');
+            clearScreen.classList.add('hidden');
+            mainGame.classList.add('hidden');
+            courseSelectionScreen.classList.remove('hidden');
+        }
+        
+        function showDifficultySelection(courseKey) {
+            courseSelectionScreen.classList.add('hidden');
+            difficultySelectionScreen.classList.remove('hidden');
+            
+            const course = allAdventures[courseKey];
+            document.getElementById('difficulty-title').textContent = `${course.name}のむずかしさをえらんでくれ！`;
+            
+            const buttonsContainer = document.getElementById('difficulty-buttons');
+            buttonsContainer.innerHTML = '';
+            
+            const difficultyOrder = ["star1", "star2", "star3"];
+
+            difficultyOrder.forEach(diffKey => {
+                if(course.difficulties[diffKey]) {
+                    const difficulty = course.difficulties[diffKey];
+                    if (difficulty.stages && difficulty.stages.length > 0) {
+                        const button = document.createElement('button');
+                        button.textContent = difficulty.name;
+                        button.dataset.difficulty = diffKey;
+                        button.classList.add('btn', 'font-mochiy', 'text-white', 'text-xl', 'font-bold', 'py-4', 'px-8', 'rounded-lg');
+                        button.classList.add(courseKey === 'one-piece' ? 'btn-one-piece' : 'btn-kimetsu');
+                        button.addEventListener('click', startGame);
+                        buttonsContainer.appendChild(button);
+                    }
+                }
+            });
+        }
+
+        function startGame(e) {
+            currentDifficultyKey = e.currentTarget.dataset.difficulty;
+            currentAdventure = allAdventures[currentCourseKey].difficulties[currentDifficultyKey];
+            currentStageIndex = 0;
+            correctAnswersCount = 0;
+
+            difficultySelectionScreen.classList.add('hidden');
+            mainGame.classList.remove('hidden');
+            
+            const char = currentAdventure.character;
+            characterName.textContent = char.name.substring(0, 1);
+            characterMessage.textContent = char.greeting;
+
+            updateCharacterGauge(); // ゲージを初期化
+            loadStage(currentStageIndex);
+        }
+
+        function loadStage(stageIndex) {
+            const stage = currentAdventure.stages[stageIndex];
+            storyTitle.textContent = stage.title;
+            storyText.textContent = stage.story;
+            
+            quizArea.classList.add('hidden');
+            feedbackArea.classList.add('hidden');
+            nextButton.classList.add('hidden');
+            optionsContainer.innerHTML = '';
+
+            if (stage.quiz) {
+                setTimeout(() => displayQuiz(stage.quiz), 1000);
+            }
+        }
+
+        function displayQuiz(quiz) {
+            quizArea.classList.remove('hidden');
+            quizQuestion.textContent = quiz.question;
+
+            quiz.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('option-btn', 'w-full', 'p-4', 'bg-white', 'rounded-lg', 'font-bold', 'text-gray-700', 'border-b-4', 'border-gray-300', 'hover:bg-yellow-100', 'hover:border-yellow-400');
+                button.onclick = () => checkAnswer(index);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function checkAnswer(selectedIndex) {
+            const stage = currentAdventure.stages[currentStageIndex];
+            const quiz = stage.quiz;
+            const isCorrect = selectedIndex === quiz.correctAnswerIndex;
+
+            feedbackArea.classList.remove('hidden');
+            feedbackText.classList.remove('text-red-500', 'text-green-500', 'feedback-fade-in');
+            void feedbackText.offsetWidth; 
+            feedbackText.classList.add('feedback-fade-in');
+
+            Array.from(optionsContainer.children).forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('opacity-50');
+            });
+
+            if (isCorrect) {
+                correctAnswersCount++; // 正解数を増やす
+                feedbackText.textContent = "正解！ 🎉";
+                feedbackText.classList.add('text-green-500');
+                optionsContainer.children[selectedIndex].classList.add('bg-green-200', 'border-green-400');
+                
+                // ゲージを更新し、レベルアップメッセージがあれば表示
+                const levelUpMessage = updateCharacterGauge();
+                characterMessage.textContent = levelUpMessage || quiz.feedback.correct;
+
+            } else {
+                feedbackText.textContent = "おしい…！";
+                feedbackText.classList.add('text-red-500');
+                characterMessage.textContent = quiz.feedback.incorrect;
+                optionsContainer.children[selectedIndex].classList.add('bg-red-200', 'border-red-400');
+                setTimeout(() => {
+                    optionsContainer.children[quiz.correctAnswerIndex].classList.add('bg-green-200', 'border-green-400');
+                }, 500);
+            }
+            
+            if (currentStageIndex < currentAdventure.stages.length - 1) {
+                nextButton.textContent = "次の話へ！";
+            } else {
+                nextButton.textContent = "クリア！";
+            }
+            nextButton.classList.remove('hidden');
+        }
+
+        function updateCharacterGauge() {
+            const totalQuestions = currentAdventure.stages.length;
+            const percentage = (correctAnswersCount / totalQuestions) * 100;
+            gaugeBar.style.width = `${percentage}%`;
+
+            const transformations = currentAdventure.character.transformations || [];
+            let currentStatus = "ノーマル";
+            let levelUpMessage = null;
+
+            // 最後に達成した変身を探す
+            let lastAchievedTransform = null;
+            for (const trans of transformations) {
+                if (correctAnswersCount >= trans.threshold) {
+                    lastAchievedTransform = trans;
+                }
+            }
+            
+            if(lastAchievedTransform){
+                currentStatus = lastAchievedTransform.name;
+                // 正解数がちょうど閾値になった時にメッセージをセット
+                if(correctAnswersCount === lastAchievedTransform.threshold) {
+                    levelUpMessage = lastAchievedTransform.message;
+                }
+            }
+
+            gaugeText.textContent = currentStatus;
+            return levelUpMessage; // レベルアップメッセージを返す
+        }
+        
+        function loadNextStage() {
+            currentStageIndex++;
+            if (currentStageIndex < currentAdventure.stages.length) {
+                loadStage(currentStageIndex);
+            } else {
+                gameClear();
+            }
+        }
+        
+        function gameClear() {
+            mainGame.classList.add('hidden');
+            clearScreen.classList.remove('hidden');
+            
+            // 最終スコア表示
+            finalScore.textContent = `${currentAdventure.stages.length}問中 ${correctAnswersCount}問 正解！`;
+
+            // スコアに応じたメッセージ
+            let msg = "よくがんばったな！またいつでも挑戦してくれ！";
+            if (correctAnswersCount === currentAdventure.stages.length) {
+                msg = "全問正解！すげぇな！君は最高の仲間だ！";
+            } else if (correctAnswersCount >= currentAdventure.stages.length / 2) {
+                msg = "おしい！あと少しで全問正解だったな！次の冒険も楽しみにしてるぜ！";
+            }
+            clearMessage.textContent = msg;
+        }
+    </script>
+</body>
+</html>
