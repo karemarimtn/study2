@@ -214,6 +214,11 @@
                 font-size: 0.9em;
             }
         }
+        
+        /* 実績通知のz-index確保 */
+        .achievement-notification {
+            z-index: 9999 !important;
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
@@ -234,6 +239,14 @@
                 </button>
             </div>
             <p class="mt-6 text-amber-800 text-lg">好きなアニメを選んで、キャラクターと一緒に冒険しよう！</p>
+            
+            <!-- 進捗表示エリア -->
+            <div id="progress-summary" class="mt-8 text-center hidden">
+                <h3 class="font-mochiy text-xl text-amber-800 mb-4">君の冒険記録 📊</h3>
+                <div class="bg-white bg-opacity-70 rounded-xl p-4 inline-block">
+                    <div id="progress-stats" class="text-sm text-amber-900"></div>
+                </div>
+            </div>
         </div>
         
         <!-- 難易度選択画面 -->
@@ -452,6 +465,130 @@
         let currentStageIndex = 0;
         let correctAnswersCount = 0; // 正解数をカウント
 
+        // --- 進捗保存機能 ---
+        const saveProgress = (courseKey, difficultyKey, stageIndex, score, isCompleted = false) => {
+            const progress = JSON.parse(localStorage.getItem('readingQuest_progress') || '{}');
+            if (!progress[courseKey]) progress[courseKey] = {};
+            if (!progress[courseKey][difficultyKey]) progress[courseKey][difficultyKey] = {
+                bestScore: 0,
+                timesPlayed: 0,
+                lastPlayedAt: null,
+                isCompleted: false
+            };
+            
+            const currentData = progress[courseKey][difficultyKey];
+            currentData.lastStage = stageIndex;
+            currentData.bestScore = Math.max(currentData.bestScore, score);
+            currentData.timesPlayed += isCompleted ? 1 : 0;
+            currentData.lastPlayedAt = new Date().toISOString();
+            currentData.isCompleted = isCompleted || currentData.isCompleted;
+            
+            localStorage.setItem('readingQuest_progress', JSON.stringify(progress));
+        };
+
+        const loadProgress = (courseKey, difficultyKey) => {
+            const progress = JSON.parse(localStorage.getItem('readingQuest_progress') || '{}');
+            return progress[courseKey]?.[difficultyKey] || null;
+        };
+
+        const getAllProgress = () => {
+            return JSON.parse(localStorage.getItem('readingQuest_progress') || '{}');
+        };
+
+        // --- 実績システム ---
+        const achievements = {
+            'first_clear': { name: '初クリア', description: '初めて冒険をクリアした', icon: '🎉' },
+            'perfect_score': { name: '完璧な冒険者', description: '全問正解でクリア', icon: '👑' },
+            'speed_reader': { name: '早読みマスター', description: '3分以内にクリア', icon: '⚡' },
+            'one_piece_master': { name: 'ワンピースマスター', description: 'ワンピース全難易度クリア', icon: '🏴‍☠️' },
+            'kimetsu_master': { name: '鬼滅マスター', description: '鬼滅の刃全難易度クリア', icon: '⚔️' },
+            'completionist': { name: 'コンプリート', description: '全コース全難易度クリア', icon: '🌟' }
+        };
+
+        const checkAchievements = (courseKey, difficultyKey, score, totalStages) => {
+            const currentAchievements = JSON.parse(localStorage.getItem('readingQuest_achievements') || '{}');
+            const newAchievements = [];
+            
+            // 初クリア
+            if (Object.keys(currentAchievements).length === 0) {
+                if (!currentAchievements['first_clear']) {
+                    currentAchievements['first_clear'] = { unlockedAt: new Date().toISOString() };
+                    newAchievements.push(achievements['first_clear']);
+                }
+            }
+            
+            // 完璧スコア
+            if (score === totalStages && !currentAchievements['perfect_score']) {
+                currentAchievements['perfect_score'] = { unlockedAt: new Date().toISOString() };
+                newAchievements.push(achievements['perfect_score']);
+            }
+            
+            // コースマスター
+            const allProgress = getAllProgress();
+            if (courseKey === 'one-piece' && !currentAchievements['one_piece_master']) {
+                const onePieceComplete = ['star1', 'star2', 'star3'].every(diff => 
+                    allProgress['one-piece']?.[diff]?.isCompleted
+                );
+                if (onePieceComplete) {
+                    currentAchievements['one_piece_master'] = { unlockedAt: new Date().toISOString() };
+                    newAchievements.push(achievements['one_piece_master']);
+                }
+            }
+            
+            if (courseKey === 'kimetsu' && !currentAchievements['kimetsu_master']) {
+                const kimetsuComplete = ['star1', 'star2', 'star3'].every(diff => 
+                    allProgress['kimetsu']?.[diff]?.isCompleted
+                );
+                if (kimetsuComplete) {
+                    currentAchievements['kimetsu_master'] = { unlockedAt: new Date().toISOString() };
+                    newAchievements.push(achievements['kimetsu_master']);
+                }
+            }
+            
+            // コンプリート
+            if (!currentAchievements['completionist']) {
+                const allCoursesComplete = ['one-piece', 'kimetsu'].every(course =>
+                    ['star1', 'star2', 'star3'].every(diff => 
+                        allProgress[course]?.[diff]?.isCompleted
+                    )
+                );
+                if (allCoursesComplete) {
+                    currentAchievements['completionist'] = { unlockedAt: new Date().toISOString() };
+                    newAchievements.push(achievements['completionist']);
+                }
+            }
+            
+            localStorage.setItem('readingQuest_achievements', JSON.stringify(currentAchievements));
+            return newAchievements;
+        };
+
+        const showAchievementNotification = (achievement) => {
+            const notification = document.createElement('div');
+            notification.classList.add('achievement-notification', 'fixed', 'top-4', 'right-4', 'bg-yellow-400', 'text-yellow-900', 'p-4', 'rounded-lg', 'shadow-lg', 'transform', 'translate-x-full', 'transition-transform', 'duration-500');
+            notification.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">${achievement.icon}</span>
+                    <div>
+                        <div class="font-bold">実績解除！</div>
+                        <div class="text-sm">${achievement.name}</div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 500);
+            }, 3000);
+        };
+
         // --- イベントリスナー ---
         document.querySelectorAll('.btn[data-course]').forEach(button => {
             button.addEventListener('click', (e) => {
@@ -470,6 +607,67 @@
             clearScreen.classList.add('hidden');
             mainGame.classList.add('hidden');
             courseSelectionScreen.classList.remove('hidden');
+            
+            // 進捗統計を表示
+            showProgressSummary();
+        }
+        
+        function showProgressSummary() {
+            const allProgress = getAllProgress();
+            const achievements = JSON.parse(localStorage.getItem('readingQuest_achievements') || '{}');
+            
+            let completedCount = 0;
+            let totalCourses = 0;
+            let bestScores = [];
+            
+            ['one-piece', 'kimetsu'].forEach(course => {
+                ['star1', 'star2', 'star3'].forEach(diff => {
+                    totalCourses++;
+                    if (allProgress[course]?.[diff]?.isCompleted) {
+                        completedCount++;
+                    }
+                    if (allProgress[course]?.[diff]?.bestScore > 0) {
+                        bestScores.push(allProgress[course][diff].bestScore);
+                    }
+                });
+            });
+            
+            if (completedCount > 0 || bestScores.length > 0) {
+                const progressSummary = document.getElementById('progress-summary');
+                const progressStats = document.getElementById('progress-stats');
+                
+                let statsHTML = `
+                    <div class="flex justify-center gap-6 flex-wrap">
+                        <div class="text-center">
+                            <div class="font-bold text-lg">${completedCount}/${totalCourses}</div>
+                            <div class="text-xs">コースクリア</div>
+                        </div>
+                `;
+                
+                if (bestScores.length > 0) {
+                    const avgScore = (bestScores.reduce((a, b) => a + b, 0) / bestScores.length).toFixed(1);
+                    statsHTML += `
+                        <div class="text-center">
+                            <div class="font-bold text-lg">${avgScore}/10</div>
+                            <div class="text-xs">平均スコア</div>
+                        </div>
+                    `;
+                }
+                
+                const achievementCount = Object.keys(achievements).length;
+                if (achievementCount > 0) {
+                    statsHTML += `
+                        <div class="text-center">
+                            <div class="font-bold text-lg">${achievementCount}</div>
+                            <div class="text-xs">実績解除</div>
+                        </div>
+                    `;
+                }
+                
+                statsHTML += '</div>';
+                progressStats.innerHTML = statsHTML;
+                progressSummary.classList.remove('hidden');
+            }
         }
         
         function showDifficultySelection(courseKey) {
@@ -488,13 +686,39 @@
                 if(course.difficulties[diffKey]) {
                     const difficulty = course.difficulties[diffKey];
                     if (difficulty.stages && difficulty.stages.length > 0) {
+                        const progressData = loadProgress(courseKey, diffKey);
+                        
+                        const buttonContainer = document.createElement('div');
+                        buttonContainer.classList.add('relative');
+                        
                         const button = document.createElement('button');
-                        button.textContent = difficulty.name;
                         button.dataset.difficulty = diffKey;
-                        button.classList.add('btn', 'font-mochiy', 'text-white', 'text-xl', 'font-bold', 'py-4', 'px-8', 'rounded-lg');
+                        button.classList.add('btn', 'font-mochiy', 'text-white', 'text-xl', 'font-bold', 'py-4', 'px-8', 'rounded-lg', 'w-full');
                         button.classList.add(courseKey === 'one-piece' ? 'btn-one-piece' : 'btn-kimetsu');
                         button.addEventListener('click', startGame);
-                        buttonsContainer.appendChild(button);
+                        
+                        // ボタンテキストと進捗表示
+                        let buttonText = difficulty.name;
+                        if (progressData) {
+                            if (progressData.isCompleted) {
+                                buttonText += ' ✅';
+                            }
+                            if (progressData.bestScore > 0) {
+                                buttonText += `\n最高記録: ${progressData.bestScore}/${difficulty.stages.length}問`;
+                            }
+                        }
+                        button.innerHTML = buttonText.replace('\n', '<br>');
+                        
+                        // 進捗バッジ
+                        if (progressData?.isCompleted) {
+                            const badge = document.createElement('div');
+                            badge.classList.add('absolute', 'top-0', 'right-0', 'bg-yellow-400', 'text-yellow-900', 'text-xs', 'font-bold', 'px-2', 'py-1', 'rounded-full', 'transform', 'translate-x-2', '-translate-y-2');
+                            badge.textContent = 'クリア済み';
+                            buttonContainer.appendChild(badge);
+                        }
+                        
+                        buttonContainer.appendChild(button);
+                        buttonsContainer.appendChild(buttonContainer);
                     }
                 }
             });
@@ -619,6 +843,10 @@
         
         function loadNextStage() {
             currentStageIndex++;
+            
+            // 進捗を途中保存
+            saveProgress(currentCourseKey, currentDifficultyKey, currentStageIndex, correctAnswersCount, false);
+            
             if (currentStageIndex < currentAdventure.stages.length) {
                 loadStage(currentStageIndex);
             } else {
@@ -627,6 +855,12 @@
         }
         
         function gameClear() {
+            // 進捗を保存
+            saveProgress(currentCourseKey, currentDifficultyKey, currentStageIndex, correctAnswersCount, true);
+            
+            // 実績チェック
+            const newAchievements = checkAchievements(currentCourseKey, currentDifficultyKey, correctAnswersCount, currentAdventure.stages.length);
+            
             mainGame.classList.add('hidden');
             clearScreen.classList.remove('hidden');
             
@@ -640,7 +874,21 @@
             } else if (correctAnswersCount >= currentAdventure.stages.length / 2) {
                 msg = "おしい！あと少しで全問正解だったな！次の冒険も楽しみにしてるぜ！";
             }
+            
+            // 過去の記録と比較
+            const progressData = loadProgress(currentCourseKey, currentDifficultyKey);
+            if (progressData && progressData.bestScore < correctAnswersCount) {
+                msg += "\n🎉 新記録達成！";
+            }
+            
             clearMessage.textContent = msg;
+            
+            // 実績通知を表示（少し遅らせて）
+            newAchievements.forEach((achievement, index) => {
+                setTimeout(() => {
+                    showAchievementNotification(achievement);
+                }, (index + 1) * 1000);
+            });
         }
     </script>
 </body>
